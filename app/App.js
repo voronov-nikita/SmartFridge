@@ -1,20 +1,51 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Html5Qrcode } from "html5-qrcode";
+import React, { useState, useEffect } from "react";
+import "./App.css";
 
-export default function App() {
+function App() {
+  const [isEnabled, setEnabled] = useState(false);
+  const [qrMessage, setQrMessage] = useState("");
+
+  useEffect(() => {
+    const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+
+    const html5QrCode = new Html5Qrcode("qrCodeContainer");
+
+    const qrScanerStop = () => {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode
+          .stop()
+          .then((ignore) => console.log("Scaner stop"))
+          .catch((err) => console.log("Scaner error"));
+      }
+    };
+
+    const qrCodeSuccess = (decodedText) => {
+      setQrMessage(decodedText);
+      setEnabled(false);
+    };
+
+    if (isEnabled) {
+      html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccess);
+      setQrMessage("");
+    } else {
+      qrScanerStop();
+    }
+
+    return () => {
+      qrScanerStop();
+    };
+  }, [isEnabled]);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <div className="scaner">
+      <div id="qrCodeContainer" />
+      {qrMessage && <div className="qr-message">{qrMessage}</div>}
+      <button className="start-button" onClick={() => setEnabled(!isEnabled)}>
+        {isEnabled ? "On" : "Off"}
+      </button>
+    </div>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;

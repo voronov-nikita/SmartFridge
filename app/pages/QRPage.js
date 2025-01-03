@@ -1,20 +1,36 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, View, Alert } from 'react-native';
+import QRCodeScanner from 'react-native-qrcode-scanner';
+import { RNCamera } from 'react-native-camera';
 
-export const QRScreen = () => {
+const QRCodeReader = () => {
+  const onSuccess = (e) => {
+    Alert.alert('QR Code Scanned', e.data);
+    console.log('QR Code Data:', e.data); // Содержимое QR-кода
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <QRCodeScanner
+      onRead={onSuccess}
+      flashMode={RNCamera.Constants.FlashMode.auto}
+      topContent={
+        <Text style={styles.centerText}>
+          Наведите камеру на QR-код для сканирования.
+        </Text>
+      }
+      bottomContent={
+        <Text style={styles.centerText}>Сканируйте код и получите данные!</Text>
+      }
+    />
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+  centerText: {
+    fontSize: 16,
+    textAlign: 'center',
+    padding: 10,
   },
 });
+
+export default QRCodeReader;
