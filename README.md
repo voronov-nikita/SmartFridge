@@ -231,6 +231,21 @@ npm start
 19. [Документация по библиотеке *html5-qrcode*](https://www.npmjs.com/package/html5-qrcode)
 20. ["Как сканировать QR код в React \| React QR scanner/reader" - youtube.com](https://www.youtube.com/watch?v=Ulk8UoqFuyY)
 21. ["Как сканировать QR код в React | React QR scanner/reader" - rutube.ru](https://rutube.ru/video/2c8ca1f8bbcf1382355089e1ef1d7bca/)
+22. []()
+23. []()
+24. []()
+25. []()
+26. []()
+27. [](https://stackoverflow.com/questions/69356244/flatlist-and-scrollview-not-scrolling-with-react-native-web-when-using-react-nav)
+28. []()
+29. []()
+30. []()
+31. []()
+32. []()
+33. []()
+34. []()
+35. []()
+36. []()
 
 <br><br>
 <br><br>
