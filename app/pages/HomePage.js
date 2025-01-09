@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, FlatList, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { Swipeable } from 'react-native-gesture-handler';
 
 import { CircleButton } from '../components/CircleButton';
 
@@ -29,6 +30,21 @@ export const HomeScreen = ({ navigation }) => {
     fetchProducts();
   }, []);
 
+  // Удаление элемента из списка
+  const handleDelete = async (item) => {
+    try {
+      // Отправляем запрос на сервер для удаления
+      await fetch(`${URL}/refrigerator-products/${item.id}`, { method: 'DELETE' });
+
+      // Удаляем из локального списка
+      setProducts((prevProducts) => prevProducts.filter((product) => product.id !== item.id));
+      Alert.alert('Успех', 'Продукт успешно удалён!');
+    } catch (error) {
+      console.error('Ошибка при удалении:', error);
+      Alert.alert('Ошибка', 'Не удалось удалить продукт.');
+    }
+  };
+
   // Сортировка продуктов
   const sortedProducts = [...products].sort((a, b) => {
     if (sortType === 'manufacture_date' || sortType === 'expiry_date') {
@@ -53,31 +69,42 @@ export const HomeScreen = ({ navigation }) => {
     return 'green';
   };
 
-  const renderItem = ({ item }) => (
-    <View
-      style={{
-        ...styles.productItem,
-        borderColor: getBorderColor(item.expiry_date),
-      }}
-    >
-      <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productDetail}>Классификация: {item.product_type}</Text>
-      <Text style={styles.productDetail}>
-        Дата изготовления: {new Date(item.manufacture_date).toLocaleDateString()}
+  // Отображение кнопки удаления
+  const renderRightActions = (item) => (
+    <View style={styles.deleteButton}>
+      <Text style={styles.deleteButtonText} onPress={() => handleDelete(item)}>
+        Удалить
       </Text>
-      <Text
+    </View>
+  );
+
+  const renderItem = ({ item }) => (
+    <Swipeable renderRightActions={() => renderRightActions(item)}>
+      <View
         style={{
-          ...styles.productDetail,
-          color: getBorderColor(item.expiry_date),
+          ...styles.productItem,
+          borderColor: getBorderColor(item.expiry_date),
         }}
       >
-        Срок годности: {new Date(item.expiry_date).toLocaleDateString()}
-      </Text>
-      <Text style={styles.productDetail}>
-        Масса: {item.mass} {item.unit}
-      </Text>
-      <Text style={styles.productDetail}>Пищевая ценность: {item.nutritional_value}</Text>
-    </View>
+        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productDetail}>Классификация: {item.product_type}</Text>
+        <Text style={styles.productDetail}>
+          Дата изготовления: {new Date(item.manufacture_date).toLocaleDateString()}
+        </Text>
+        <Text
+          style={{
+            ...styles.productDetail,
+            color: getBorderColor(item.expiry_date),
+          }}
+        >
+          Срок годности: {new Date(item.expiry_date).toLocaleDateString()}
+        </Text>
+        <Text style={styles.productDetail}>
+          Масса: {item.mass} {item.unit}
+        </Text>
+        <Text style={styles.productDetail}>Пищевая ценность: {item.nutritional_value}</Text>
+      </View>
+    </Swipeable>
   );
 
   return (
@@ -111,7 +138,7 @@ export const HomeScreen = ({ navigation }) => {
         <FlatList
           data={filteredProducts}
           keyboardShouldPersistTaps="handled"
-          keyExtractor={item => item.name}
+          keyExtractor={item => item.id}
           ListEmptyComponent={
             <Text style={{ textAlign: 'center' }}>В этом холодильнике пусто</Text>
           }
@@ -174,5 +201,16 @@ const styles = StyleSheet.create({
   productDetail: {
     fontSize: 14,
     color: '#555',
+  },
+  deleteButton: {
+    justifyContent: 'center',
+    backgroundColor: 'red',
+    alignItems: 'flex-end',
+    paddingHorizontal: 20,
+    flex: 1,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
