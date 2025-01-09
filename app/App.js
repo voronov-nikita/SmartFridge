@@ -1,51 +1,49 @@
-import { Html5Qrcode } from "html5-qrcode";
-import React, { useState, useEffect } from "react";
-import "./App.css";
+//
+// Основной файл разработки и запуска приложения.
+//
 
-function App() {
-  const [isEnabled, setEnabled] = useState(false);
-  const [qrMessage, setQrMessage] = useState("");
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import React from 'react';
 
-  useEffect(() => {
-    const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+// импорт отдельных модулей - страниц
+import { QRScreen } from './pages/QRPage';
+import { HomeScreen } from './pages/HomePage';
+import { ProductsScreen } from './pages/ProductsPage';
+import { StatisticsScreen } from './pages/StatisticsPage';
+import { RefrigeratorsScreen } from './pages/RefrigeratorsPage';
 
-    const html5QrCode = new Html5Qrcode("qrCodeContainer");
+// конфигуратор навигации
+const Stack = createStackNavigator();
 
-    const qrScanerStop = () => {
-      if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode
-          .stop()
-          .then((ignore) => console.log("Scaner stop"))
-          .catch((err) => console.log("Scaner error"));
-      }
-    };
-
-    const qrCodeSuccess = (decodedText) => {
-      setQrMessage(decodedText);
-      setEnabled(false);
-    };
-
-    if (isEnabled) {
-      html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccess);
-      setQrMessage("");
-    } else {
-      qrScanerStop();
-    }
-
-    return () => {
-      qrScanerStop();
-    };
-  }, [isEnabled]);
-
+export default function App() {
   return (
-    <div className="scaner">
-      <div id="qrCodeContainer" />
-      {qrMessage && <div className="qr-message">{qrMessage}</div>}
-      <button className="start-button" onClick={() => setEnabled(!isEnabled)}>
-        {isEnabled ? "On" : "Off"}
-      </button>
-    </div>
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Home"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#ffffff',
+          },
+        }}
+      >
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+		  
+          options={{
+            headerShown: false,
+          }}
+        />
+
+        <Stack.Screen name="Products" component={ProductsScreen} />
+
+        <Stack.Screen name="Statistics" component={StatisticsScreen} />
+
+        <Stack.Screen name="Refrigerators" component={RefrigeratorsScreen} />
+
+        <Stack.Screen name="QR" component={QRScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-export default App;
