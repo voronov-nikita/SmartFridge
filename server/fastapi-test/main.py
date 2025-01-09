@@ -55,7 +55,7 @@ products = [
         "name": "Соль",
         "product_type": "Приправы",
         "manufacture_date": "2025-01-09",
-        "expiry_date": "2025-01-10",
+        "expiry_date": "2025-01-14",
         "mass": 1,
         "unit": "кг",
         "nutritional_value": "24 ккал/100 г",
@@ -80,6 +80,22 @@ async def get_products():
     Возвращает список продуктов в холодильнике.
     """
     return products
+
+@app.delete("/refrigerator-products/{product_name}", response_model=Product)
+async def delete_product(product_name: str):
+    """
+    Удаляет продукт из списка продуктов по имени.
+    """
+    # Поиск продукта
+    product = next((p for p in products if p["name"] == product_name), None)
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Продукт не найден")
+    
+    # Удаление продукта
+    products.remove(product)
+    
+    return product
 
 @app.post("/qr-data")
 async def save_qr_data(data: dict):
