@@ -1,8 +1,12 @@
+import { View, Text, StyleSheet, FlatList, TextInput } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, SafeAreaView } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
-export const HomeScreen = () => {
+import { CircleButton } from '../components/CircleButton';
+
+import { URL } from '../config';
+
+export const HomeScreen = ({ navigation }) => {
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortType, setSortType] = useState('expiry_date'); // По умолчанию сортировка по сроку годности
@@ -11,10 +15,10 @@ export const HomeScreen = () => {
   // Функция для получения данных с сервера
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://192.168.0.9:8000/refrigerator-products');
+      const response = await fetch(`${URL}/refrigerator-products`);
       const data = await response.json();
-      if (data) { 
-        setProducts(data); 
+      if (data) {
+        setProducts(data);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -77,14 +81,14 @@ export const HomeScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Продукты в холодильнике</Text>
 
       <TextInput
         style={styles.searchInput}
         placeholder="Поиск продуктов по названию..."
         value={searchQuery}
-        onChangeText={(text) => setSearchQuery(text)}
+        onChangeText={text => setSearchQuery(text)}
       />
 
       <DropDownPicker
@@ -103,25 +107,29 @@ export const HomeScreen = () => {
       />
 
       {/* Список продуктов */}
-      <View style={{height: "50%"}}>
+      <View style={{ flex: 1 }}>
         <FlatList
           data={filteredProducts}
           keyboardShouldPersistTaps="handled"
           keyExtractor={item => item.name}
-          ListEmptyComponent={<Text style={{ textAlign: 'center' }}>В этом холодильнике пусто</Text>}
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center' }}>В этом холодильнике пусто</Text>
+          }
           renderItem={renderItem}
           nestedScrollEnabled={true}
           scrollEnabled={true}
-          // showsVerticalScrollIndicator={false}
-          />
+          showsVerticalScrollIndicator={false}
+        />
       </View>
+
+      <CircleButton navigation={navigation} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
+    flex: 1,
     padding: 16,
     backgroundColor: '#f5f5f5',
   },
@@ -142,11 +150,11 @@ const styles = StyleSheet.create({
   dropdown: {
     marginBottom: 16,
     borderColor: '#ccc',
-    zIndex : -1,
+    zIndex: -1,
   },
   dropdownContainer: {
     borderColor: '#ccc',
-    zIndex : -1,
+    zIndex: -1,
   },
   productItem: {
     padding: 16,
@@ -158,7 +166,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-
   },
   productName: {
     fontSize: 18,

@@ -10,6 +10,7 @@ import React from 'react';
 import { QRScreen } from './pages/QRPage';
 import { HomeScreen } from './pages/HomePage';
 import { ProductsScreen } from './pages/ProductsPage';
+import { QRCodeGenerator } from './pages/QRGenerator';
 import { StatisticsScreen } from './pages/StatisticsPage';
 import { RefrigeratorsScreen } from './pages/RefrigeratorsPage';
 
@@ -20,20 +21,26 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Home"
+        initialRouteName="Generator"
         screenOptions={{
+          cardStyle: {
+            flex: 1
+          },
           headerStyle: {
             backgroundColor: '#ffffff',
           },
+          contentStyle: {
+            flexGrow: 1,
+            overflow: 'scroll'
+          }
         }}
       >
         <Stack.Screen
           name="Home"
           component={HomeScreen}
-		  
-          options={{
-            headerShown: false,
-          }}
+          // options={{
+          //   headerShown: false,
+          // }}
         />
 
         <Stack.Screen name="Products" component={ProductsScreen} />
@@ -41,6 +48,8 @@ export default function App() {
         <Stack.Screen name="Statistics" component={StatisticsScreen} />
 
         <Stack.Screen name="Refrigerators" component={RefrigeratorsScreen} />
+        
+        <Stack.Screen name="Generator" component={QRCodeGenerator} />
 
         <Stack.Screen name="QR" component={QRScreen} />
       </Stack.Navigator>

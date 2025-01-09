@@ -7,11 +7,12 @@
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useEffect, useRef } from 'react';
 
-// зачем-то ставить регион для сканера.
-// Так в документации 😊
+import { URL } from '../config';
+
+// ID для области сканирования
 const qrcodeRegionId = "html5qr-code-full-region";
 
-// сам блок
+// Компонент сканера QR-кодов
 const QRCodeScanner = () => {
   const scannerRef = useRef(null);
 
@@ -22,13 +23,28 @@ const QRCodeScanner = () => {
       rememberLastUsedCamera: true,
     };
 
-    // если код был успешно отсканирован
-    const onScanSuccess = (decodedText, decodedResult) => {
-      console.log(`Code matched = ${decodedText}`, decodedResult);
+    // Обработчик успешного сканирования
+    const onScanSuccess = async (decodedText, decodedResult) => {
+      try {
+        // Парсим полученный JSON
+        const data = JSON.parse(decodedText);
+
+        // Отправляем данные на сервер
+        const response = await fetch(`${URL}/qr-data`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+        
+      } catch (error) {
+        console.error("Error processing QR code: ", error);
+      }
     };
 
     scannerRef.current = new Html5QrcodeScanner(qrcodeRegionId, config, false);
-    scannerRef.current.render(onScanSuccess); // Передаем обработчик ошибок
+    scannerRef.current.render(onScanSuccess);
 
     return () => {
       scannerRef.current.clear().catch(error => {
@@ -38,7 +54,7 @@ const QRCodeScanner = () => {
   }, []);
 
   return (
-      <div id={qrcodeRegionId} style={{ width: '100%', height: '100%' }}></div>
+      <div id={qrcodeRegionId} style={{ width: '100%', height: '90%' }}></div>
   );
 };
 
