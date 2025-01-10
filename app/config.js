@@ -4,4 +4,5 @@
 // 
 
 // URL сервера
-export const URL = "http://192.168.0.9:8000"
+// export const URL = "http://192.168.0.9:8000"
+export const URL = "http://voronovnr.ddns.net:8000/"
