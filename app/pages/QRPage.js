@@ -1,20 +1,14 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+// 
+// Страница сканирования
+// Толком не используется, но требует в себе наличие объекта navigate!
+// 
 
-export const QRScreen = () => {
+import QRCodeScanner from '../components/QRScanner';
+
+// основной экспортируемый компонент
+export const QRScreen = ({ navigate }) => {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+      <QRCodeScanner />
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
