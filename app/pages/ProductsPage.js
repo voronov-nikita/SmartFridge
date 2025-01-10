@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 export const ProductsScreen = () => {
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+      <Text>Пока пусто, но наработки уже есть 🥳</Text>
       <StatusBar style="auto" />
     </View>
   );

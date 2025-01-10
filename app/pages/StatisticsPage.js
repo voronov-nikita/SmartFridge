@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 export const StatisticsScreen = () => {
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+      <Text>Пока пусто 🫠</Text>
       <StatusBar style="auto" />
     </View>
   );

@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, FlatList, TextInput, Alert } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Swipeable } from 'react-native-gesture-handler';
 
@@ -26,9 +27,12 @@ export const HomeScreen = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  // Используем useFocusEffect для загрузки данных при активации экрана
+    useFocusEffect(
+      useCallback(() => {
+        fetchProducts(); // Загружаем продукты
+      }, [])
+    );
 
   // Удаление элемента из списка
   const handleDelete = async (item) => {
