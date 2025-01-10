@@ -18,6 +18,11 @@ class QRData(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(JSON, nullable=False)
 
+class Fridge(Base):
+    __tablename__ = "fridges"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False, unique=True)
+
 # Модель продуктов
 class Product(BaseModel):
     name: str
@@ -27,6 +32,13 @@ class Product(BaseModel):
     mass: float
     unit: Literal["г", "кг", "мл", "л"]
     nutritional_value: str
+
+class FridgeModel(BaseModel):
+    id: int
+    title: str
+
+class NewFridgeModel(BaseModel):
+    title: str
 
 # Создаем таблицы
 Base.metadata.create_all(bind=engine)
@@ -48,6 +60,15 @@ products = [
         "manufacture_date": "2025-01-05",
         "expiry_date": "2025-01-07",
         "mass": 0.5,
+        "unit": "кг",
+        "nutritional_value": "250 ккал/100 г",
+    },
+    {
+        "name": "Хлеб",
+        "product_type": "Выпечка",
+        "manufacture_date": "2025-01-05",
+        "expiry_date": "2025-01-07",
+        "mass": 1,
         "unit": "кг",
         "nutritional_value": "250 ккал/100 г",
     },
@@ -111,6 +132,36 @@ async def save_qr_data(data: dict):
         return {"message": "QR data saved successfully", "id": qr_data.id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+@app.post("/newfridge", response_model=FridgeModel)
+async def create_new_fridge(new_fridge: NewFridgeModel):
+    """
+    Добавляет новый холодильник.
+    """
+    db = SessionLocal()
+    try:
+        fridge = Fridge(title=new_fridge.title)
+        db.add(fridge)
+        db.commit()
+        db.refresh(fridge)
+        return {"id": fridge.id, "title": fridge.title}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Холодильник с таким названием уже существует.")
+    finally:
+        db.close()
+
+@app.get("/fridge", response_model=List[FridgeModel])
+async def get_fridges():
+    """
+    Возвращает список всех холодильников.
+    """
+    db = SessionLocal()
+    try:
+        fridges = db.query(Fridge).all()
+        return [{"id": fridge.id, "title": fridge.title} for fridge in fridges]
     finally:
         db.close()
 
