@@ -124,14 +124,6 @@ export const AuthScreen = ({ navigation }) => {
 		setPassword('');
 	};
 
-	// Логика выхода из аккаунта
-	const logout = () => {
-		localStorage.removeItem('authToken');
-		localStorage.removeItem('expiresAt');
-		setIsAuthenticated(false);
-		navigation.navigate('Auth');
-	};
-
 	// Интерфейс страницы
 	return (
 		<SafeAreaView style={styles.container}>

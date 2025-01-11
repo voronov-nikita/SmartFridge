@@ -17,12 +17,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-class User(Base): 
-    tablename = "users" 
-    id = Column(Integer, primary_key=True, index=True) 
-    login = Column(String, unique=True, nullable=False) 
-    email = Column(String, unique=True, nullable=False) 
-    password = Column(String, nullable=False)
+# class User(Base): 
+#     tablename = "users" 
+#     id = Column(Integer, primary_key=True, index=True) 
+#     login = Column(String, unique=True, nullable=False) 
+#     email = Column(String, unique=True, nullable=False) 
+#     password = Column(String, nullable=False)
 
 # Модель данных для БД
 class QRData(Base):
@@ -35,10 +35,10 @@ class Fridge(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, unique=True)
 
-class UserCreate(BaseModel): 
-    login: str 
-    email: EmailStr 
-    password: str
+# class UserCreate(BaseModel): 
+#     login: str 
+#     email: EmailStr 
+#     password: str
 
 # Модель продуктов
 class Product(BaseModel):
@@ -69,6 +69,7 @@ app = FastAPI()
 
 # Разрешенные источники
 origins = [
+    "http://192.168.0.9:8081",
     "http://localhost:8081",  # Фронтенд, с которого будут приходить запросы
     "http://localhost",       # Разрешаем локальный хост
 ]
@@ -129,21 +130,21 @@ products = [
 def hash_password(password: str) -> str: 
     return pwd_context.hash(password)
 
-@app.post("/reg", response_model=UserCreate) 
-async def register(user: UserCreate, db: Session = Depends(get_db)): 
-    # Проверка, существует ли уже пользователь 
-    existing_user = db.query(User).filter((User .email == user.email) | (User .login == user.login)).first() 
-    if existing_user: 
-        raise HTTPException(status_code=400, detail="Email или login уже зарегистрированы")
+# @app.post("/reg", response_model=UserCreate) 
+# async def register(user: UserCreate, db: Session = Depends(get_db)): 
+#     # Проверка, существует ли уже пользователь 
+#     existing_user = db.query(User).filter((User .email == user.email) | (User .login == user.login)).first() 
+#     if existing_user: 
+#         raise HTTPException(status_code=400, detail="Email или login уже зарегистрированы")
     
-    hashed_password = hash_password(user.password)
-    new_user = User(login=user.login, email=user.email, password=hashed_password)
+#     hashed_password = hash_password(user.password)
+#     new_user = User(login=user.login, email=user.email, password=hashed_password)
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+#     db.add(new_user)
+#     db.commit()
+#     db.refresh(new_user)
 
-    return {"login": new_user.login, "email": new_user.email}
+#     return {"login": new_user.login, "email": new_user.email}
 
 # Функция для генерации токенов
 def create_token(data: dict, secret_key: str, expires_delta: timedelta) -> str:
