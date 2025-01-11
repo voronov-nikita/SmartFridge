@@ -1,16 +1,28 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Literal
 from sqlalchemy import create_engine, Column, Integer, String, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime, timedelta
+from passlib.context import CryptContext
+from jose import jwt
 
 # Настройки базы данных
 DATABASE_URL = "sqlite:///./qr_data.db"
 Base = declarative_base()
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+class User(Base): 
+    tablename = "users" 
+    id = Column(Integer, primary_key=True, index=True) 
+    login = Column(String, unique=True, nullable=False) 
+    email = Column(String, unique=True, nullable=False) 
+    password = Column(String, nullable=False)
 
 # Модель данных для БД
 class QRData(Base):
@@ -22,6 +34,11 @@ class Fridge(Base):
     __tablename__ = "fridges"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, unique=True)
+
+class UserCreate(BaseModel): 
+    login: str 
+    email: EmailStr 
+    password: str
 
 # Модель продуктов
 class Product(BaseModel):
@@ -40,10 +57,44 @@ class FridgeModel(BaseModel):
 class NewFridgeModel(BaseModel):
     title: str
 
+class AuthRequest(BaseModel):
+    login: str
+    password: str
+
 # Создаем таблицы
 Base.metadata.create_all(bind=engine)
 
-# Тестовые данные
+# Инициализация приложения
+app = FastAPI()
+
+# Разрешенные источники
+origins = [
+    "http://localhost:8081",  # Фронтенд, с которого будут приходить запросы
+    "http://localhost",       # Разрешаем локальный хост
+]
+
+# Добавляем middleware CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Указываем разрешенные источники
+    allow_credentials=True,
+    allow_methods=["*"],  # Разрешаем все HTTP-методы (GET, POST и т.д.)
+    allow_headers=["*"],  # Разрешаем все заголовки
+)
+
+# Константы для JWT
+SECRET_KEY = "ABC12BCA21"
+REFRESH_SECRET_KEY = "QWERTY"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
+# Мок-данные для теста
+mock_users = [
+    {"login": "admin", "password": "admin"},
+    {"login": "user", "password": "password"},
+]
+
+# Тестовые данные для холодильника
 products = [
     {
         "name": "Молоко",
@@ -64,15 +115,6 @@ products = [
         "nutritional_value": "250 ккал/100 г",
     },
     {
-        "name": "Хлеб",
-        "product_type": "Выпечка",
-        "manufacture_date": "2025-01-05",
-        "expiry_date": "2025-01-07",
-        "mass": 1,
-        "unit": "кг",
-        "nutritional_value": "250 ккал/100 г",
-    },
-    {
         "name": "Соль",
         "product_type": "Приправы",
         "manufacture_date": "2025-01-09",
@@ -83,17 +125,59 @@ products = [
     },
 ]
 
-# Инициализация приложения
-app = FastAPI()
 
-# Разрешаем доступ из любого источника для тестирования
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+def hash_password(password: str) -> str: 
+    return pwd_context.hash(password)
+
+@app.post("/reg", response_model=UserCreate) 
+async def register(user: UserCreate, db: Session = Depends(get_db)): 
+    # Проверка, существует ли уже пользователь 
+    existing_user = db.query(User).filter((User .email == user.email) | (User .login == user.login)).first() 
+    if existing_user: 
+        raise HTTPException(status_code=400, detail="Email или login уже зарегистрированы")
+    
+    hashed_password = hash_password(user.password)
+    new_user = User(login=user.login, email=user.email, password=hashed_password)
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"login": new_user.login, "email": new_user.email}
+
+# Функция для генерации токенов
+def create_token(data: dict, secret_key: str, expires_delta: timedelta) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, secret_key, algorithm="HS256")
+
+# Эндпоинт авторизации
+@app.post("/auth")
+async def auth(request_data: AuthRequest, response: Response):
+    # Ищем пользователя в базе
+    user = next((u for u in mock_users if u["login"] == request_data.login and u["password"] == request_data.password), None)
+
+    if user:
+        # Генерация токенов
+        access_token = create_token({"login": request_data.login}, SECRET_KEY, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+        refresh_token = create_token({"login": request_data.login}, REFRESH_SECRET_KEY, timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
+
+        # Установка куки с refresh-токеном
+        response.set_cookie(
+            key="refreshToken",
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            samesite="strict"
+        )
+
+        # Возврат access-токена и времени его жизни
+        return {"access": access_token, "expiresIn": 3600}
+
+    # Если пользователь не найден, возвращаем ошибку
+    raise HTTPException(status_code=401, detail="Invalid login or password")
+
 
 @app.get("/refrigerator-products", response_model=List[Product])
 async def get_products():
@@ -165,6 +249,7 @@ async def get_fridges():
     finally:
         db.close()
 
+# Автоматический запуск сервера
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
