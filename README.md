@@ -9,6 +9,7 @@
 
 1. [О проекте](./README.md#о-проекте)
 2. [Описание приложения](./README.md#описание-приложения)
+   * [Скриншоты приложения](./README.md#скриншоты-приложения)
 3. [Структура репозитория](./README.md#структура-репозитория)
    * [Документация](./README.md#документация)
    * [Backend логика](./README.md#backend-логика)
@@ -54,7 +55,80 @@
 
 Дело в том, что приложение работает и настроено на работу с конкретным устройством (по техническому заданию это холодильник), но работоспособность самого продукта не зависит от него. Следовательно не сложно сделать вывод, что приложение можно использовать для отслеживания содержимого любого устройства, разве что нужно изменить структуру передаваемых результатов.
 
+### Скриншоты приложения
 
+> [!WARNING]
+> Реальное приложение может отличаться.
+> 
+> Все зависит от версии разработки и дате обновления README.md
+
+Главная страница:
+
+<div style="display: flex; justify-content: center;">
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/mainpage.jpg" alt="Image 1" style="width:100px;"/>
+    <figcaption style="font-size: 14px;">Главная</figcaption>
+  </figure>
+
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/Filter-mainpage.jpg" alt="Image 2" style="width:100px;"/>
+    <figcaption style="font-size: 10px;" >Фильтр по словам <br>(поиск)</figcaption>
+  </figure>
+
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/delete-mainpage.jpg" alt="Image 3" style="width:100px;"/>
+    <figcaption style="font-size: 10px;">Функция удаления<br>нужно просто смахнуть</figcaption>
+  </figure>
+</div>
+
+
+На главной странице происходит основная работа с продуктами, их просмотр и удаление. Можно отфильтровать продукты по названию, что позволяет быстро найти нужный продукт, а так же удалить ненужные продукты с помощью функции смахивания влево.
+
+Навигация:
+
+Для навигации достаточно нажать на иконку "бургер" в левом верхнем углу, после этого появиться меню с возможностями:
+
+<div>
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/navigation.jpg" alt="Image 3" style="width:100px;"/>
+    <figcaption style="font-size: 10px;">Меню навигации</figcaption>
+  </figure>
+</div>
+
+Другие страницы:
+
+<div style="display: flex; justify-content: center;">
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/generatePage.jpg" alt="Image 3" style="width:100px;"/>
+    <figcaption style="font-size: 10px;">Генерация QR кода (1 часть)</figcaption>
+  </figure>
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/GenerateQR.jpg" alt="Image 3" style="width:100px;"/>
+    <figcaption style="font-size: 10px;">Генерация QR кода (2 часть)</figcaption>
+  </figure>
+</div>
+
+<div style="display: flex; justify-content: center;">
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/listFridge.jpg" alt="Image 3" style="width:100px;"/>
+    <figcaption style="font-size: 10px;">Список активных<br>холодильников</figcaption>
+  </figure>
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/CreacteFridgePage.jpg" alt="Image 3" style="width:100px;"/>
+    <figcaption style="font-size: 10px;">Создать холодильник</figcaption>
+  </figure>
+</div>
+
+<div style="display: flex; justify-content: center;">
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/QRPage.jpg" alt="Image 3" style="width:100px;"/>
+    <figcaption style="font-size: 10px;">Страница сканирования QR<br>(требуются разрешения)</figcaption>
+  </figure>
+  <figure style="margin: 10px; text-align: center;">
+    <img src="./img/QRScanner-worked.jpg" alt="Image 3" style="width:100px;"/>
+    <figcaption style="font-size: 10px;">Пример работы QR</figcaption>
+  </figure>
+</div>
 
 ---
 
@@ -117,7 +191,8 @@ Frontend часть проект - это само web приложение, н�
 
 ## Запуск проекта
 
-Для запуска проекта необходимо подготовить среду
+> [!IMPORTANT]
+> Для запуска проекта необходимо подготовить среду.
 
 ### Запуск сервера
 
@@ -231,23 +306,12 @@ npm start
 19. [Документация по библиотеке *html5-qrcode*](https://www.npmjs.com/package/html5-qrcode)
 20. ["Как сканировать QR код в React \| React QR scanner/reader" - youtube.com](https://www.youtube.com/watch?v=Ulk8UoqFuyY)
 21. ["Как сканировать QR код в React | React QR scanner/reader" - rutube.ru](https://rutube.ru/video/2c8ca1f8bbcf1382355089e1ef1d7bca/)
-22. []()
-23. []()
+22. [Пример работы React кода - github.com](https://github.com/DmitriyShkredov/react-qr-scaner)
+23. [Официальная документация по библиотеке генерации QR кодов в React Native - npmjs.com](https://www.npmjs.com/package/react-native-qrcode-svg)
 24. []()
-25. []()
-26. []()
-27. [](https://stackoverflow.com/questions/69356244/flatlist-and-scrollview-not-scrolling-with-react-native-web-when-using-react-nav)
-28. []()
-29. []()
-30. []()
-31. []()
-32. []()
-33. []()
-34. []()
-35. []()
-36. []()
+25. [ПОЧЕМУ НЕ ЛИСТАЕТСЯ FLATLIST?? - решение: stackoverflow.com](https://stackoverflow.com/questions/69356244/flatlist-and-scrollview-not-scrolling-with-react-native-web-when-using-react-nav)
 
 <br><br>
 <br><br>
 
-###### 04.01.2025
+###### 12.01.2025
