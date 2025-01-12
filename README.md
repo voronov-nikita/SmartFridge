@@ -67,17 +67,17 @@
 <div style="display: flex; justify-content: center;">
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/mainpage.jpg" alt="Image 1" style="width:100px;"/>
-    <figcaption style="font-size: 14px;">Главная</figcaption>
+    <p style="font-size: 14px;">Главная</p>
   </figure>
 
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/Filter-mainpage.jpg" alt="Image 2" style="width:100px;"/>
-    <figcaption style="font-size: 10px;" >Фильтр по словам <br>(поиск)</figcaption>
+    <p style="font-size: 10px;" >Фильтр по словам <br>(поиск)</p>
   </figure>
 
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/delete-mainpage.jpg" alt="Image 3" style="width:100px;"/>
-    <figcaption style="font-size: 10px;">Функция удаления<br>нужно просто смахнуть</figcaption>
+    <p style="font-size: 10px;">Функция удаления<br>нужно просто смахнуть</p>
   </figure>
 </div>
 
@@ -91,7 +91,7 @@
 <div>
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/navigation.jpg" alt="Image 3" style="width:100px;"/>
-    <figcaption style="font-size: 10px;">Меню навигации</figcaption>
+    <p style="font-size: 10px;">Меню навигации</p>
   </figure>
 </div>
 
@@ -100,33 +100,33 @@
 <div style="display: flex; justify-content: center;">
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/generatePage.jpg" alt="Image 3" style="width:100px;"/>
-    <figcaption style="font-size: 10px;">Генерация QR кода (1 часть)</figcaption>
+    <p style="font-size: 10px;">Генерация QR кода (1 часть)</p>
   </figure>
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/GenerateQR.jpg" alt="Image 3" style="width:100px;"/>
-    <figcaption style="font-size: 10px;">Генерация QR кода (2 часть)</figcaption>
+    <p style="font-size: 10px;">Генерация QR кода (2 часть)</p>
   </figure>
 </div>
 
 <div style="display: flex; justify-content: center;">
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/listFridge.jpg" alt="Image 3" style="width:100px;"/>
-    <figcaption style="font-size: 10px;">Список активных<br>холодильников</figcaption>
+    <p style="font-size: 10px;">Список активных<br>холодильников</p>
   </figure>
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/CreacteFridgePage.jpg" alt="Image 3" style="width:100px;"/>
-    <figcaption style="font-size: 10px;">Создать холодильник</figcaption>
+    <p style="font-size: 10px;">Создать холодильник</p>
   </figure>
 </div>
 
 <div style="display: flex; justify-content: center;">
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/QRPage.jpg" alt="Image 3" style="width:100px;"/>
-    <figcaption style="font-size: 10px;">Страница сканирования QR<br>(требуются разрешения)</figcaption>
+    <p style="font-size: 10px;">Страница сканирования QR<br>(требуются разрешения)</p>
   </figure>
   <figure style="margin: 10px; text-align: center;">
     <img src="./img/QRScanner-worked.jpg" alt="Image 3" style="width:100px;"/>
-    <figcaption style="font-size: 10px;">Пример работы QR</figcaption>
+    <p style="font-size: 10px;">Пример работы QR</p>
   </figure>
 </div>
 
