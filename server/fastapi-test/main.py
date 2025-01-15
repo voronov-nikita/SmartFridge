@@ -17,12 +17,13 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# class User(Base): 
-#     tablename = "users" 
-#     id = Column(Integer, primary_key=True, index=True) 
-#     login = Column(String, unique=True, nullable=False) 
-#     email = Column(String, unique=True, nullable=False) 
-#     password = Column(String, nullable=False)
+# модель пользователей
+class User(Base): 
+    tablename = "users" 
+    id = Column(Integer, primary_key=True, index=True) 
+    login = Column(String, unique=True, nullable=False) 
+    email = Column(String, unique=True, nullable=False) 
+    password = Column(String, nullable=False)
 
 # Модель данных для БД
 class QRData(Base):
@@ -35,10 +36,11 @@ class Fridge(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, unique=True)
 
-# class UserCreate(BaseModel): 
-#     login: str 
-#     email: EmailStr 
-#     password: str
+# модель пользователя
+class UserCreate(BaseModel): 
+    login: str 
+    email: str 
+    password: str
 
 # Модель продуктов
 class Product(BaseModel):
@@ -50,6 +52,7 @@ class Product(BaseModel):
     unit: Literal["г", "кг", "мл", "л"]
     nutritional_value: str
 
+# модель холодильника
 class FridgeModel(BaseModel):
     id: int
     title: str
@@ -69,7 +72,7 @@ app = FastAPI()
 
 # Разрешенные источники
 origins = [
-    "http://192.168.0.9:8081",
+    "http://192.168.0.16:8081",
     "http://localhost:8081",  # Фронтенд, с которого будут приходить запросы
     "http://localhost",       # Разрешаем локальный хост
 ]
@@ -98,6 +101,7 @@ mock_users = [
 # Тестовые данные для холодильника
 products = [
     {
+        "id": 1,
         "name": "Молоко",
         "product_type": "Молочные продукты",
         "manufacture_date": "2025-01-01",
@@ -107,6 +111,7 @@ products = [
         "nutritional_value": "50 ккал/100 мл",
     },
     {
+        "id": 2,
         "name": "Хлеб",
         "product_type": "Выпечка",
         "manufacture_date": "2025-01-05",
@@ -116,6 +121,7 @@ products = [
         "nutritional_value": "250 ккал/100 г",
     },
     {
+        "id": 3,
         "name": "Соль",
         "product_type": "Приправы",
         "manufacture_date": "2025-01-09",
@@ -187,13 +193,13 @@ async def get_products():
     """
     return products
 
-@app.delete("/refrigerator-products/{product_name}", response_model=Product)
-async def delete_product(product_name: str):
+@app.delete("/refrigerator-products/{product_id}", response_model=Product)
+async def delete_product(product_id: str):
     """
     Удаляет продукт из списка продуктов по имени.
     """
     # Поиск продукта
-    product = next((p for p in products if p["name"] == product_name), None)
+    product = next((p for p in products if p["id"] == product_id), None)
     
     if not product:
         raise HTTPException(status_code=404, detail="Продукт не найден")

@@ -42,7 +42,9 @@
     "react-router-dom": "^7.1.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "https": "^1.0.0",
+    "webpack-dev-server": "^5.2.0"
   },
   "private": true
 }
