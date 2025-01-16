@@ -75,8 +75,8 @@ export const AuthScreen = ({ navigation }) => {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        login: 'admin',
-                        password: 'admin',
+                        login: login,
+                        password: password,
                     }),
                     credentials: 'include',
                 });

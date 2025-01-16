@@ -48,9 +48,11 @@ export const RegScreen = ({ navigation }) => {
                     },
                     // тело POST запроса
                     body: JSON.stringify({
-                        login,
-                        password,
+                        login: login,
+                        email: email,
+                        password: password,
                     }),
+                    credentials: 'include',
                 });
                 // Ждем ответа от сервера
                 const data = await response.json();
@@ -60,9 +62,6 @@ export const RegScreen = ({ navigation }) => {
 
                 // Сохранение access token в sessionStorage
                 sessionStorage.setItem('accessToken', access);
-
-                console.log('Access token сохранён:', access);
-                console.log('Refresh token получен и хранится в куках автоматически');
 
                 navigation.navigate('Auth');
             } catch (error) {
