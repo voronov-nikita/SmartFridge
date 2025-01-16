@@ -17,39 +17,13 @@ import { ExitButton } from './components/ExitButton';
 import { ProductsScreen } from './pages/ProductsPage';
 import { QRCodeGenerator } from './pages/QRGenerator';
 import { NewFridgeScreen } from './pages/NewFidgePage';
+import { OneFridgeScreen } from './pages/OneFridgePage';
 import { StatisticsScreen } from './pages/StatisticsPage';
 import { RefrigeratorsScreen } from './pages/RefrigeratorsPage';
 
 // Создаем конфигуратор Drawer и Stack
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
-
-// Обертка для Stack внутри Drawer для страницы Home
-function HomeStack() {
-	return (
-		<Stack.Navigator
-			initialRouteName="Home"
-			screenOptions={{
-				headerStyle: {
-					backgroundColor: '#ffffff',
-				},
-				cardStyle: {
-					flex: 1,
-				},
-			}}
-		>
-			<Stack.Screen
-				name="Home"
-				component={HomeScreen}
-				options={{
-					headerShown: false,
-				}}
-			/>
-
-			<Stack.Screen name="QR" component={QRScreen} />
-		</Stack.Navigator>
-	);
-}
 
 // Обертка для Stack внутри Drawer для страницы Холодильников
 function FidgeStack() {
@@ -80,6 +54,17 @@ function FidgeStack() {
 				}}
 				component={NewFridgeScreen}
 			/>
+
+			<Stack.Screen
+				name="OneFridge"
+				options={{
+					title: 'Просмотр холодильника',
+					headerTitleAlign: 'center',
+				}}
+				component={OneFridgeScreen}
+			/>
+
+			<Stack.Screen name="QR" component={QRScreen} />
 		</Stack.Navigator>
 	);
 }
@@ -135,32 +120,32 @@ export default function App() {
 					options={{ headerShown: false, drawerItemStyle: { display: 'none' } }}
 					component={AuthStack}
 				/>
-				<Drawer.Screen name="Home" options={{ title: 'Главная' }} component={HomeStack} />
+				<Drawer.Screen
+					name="Home"
+					options={{ title: 'Главная', headerTitleAlign: 'center' }}
+					component={HomeScreen}
+				/>
 				<Drawer.Screen
 					name="Refrigerators"
-					options={{ title: 'Холодильники' }}
+					options={{ title: 'Холодильники', headerTitleAlign: 'center' }}
 					component={FidgeStack}
 				/>
 				<Drawer.Screen
 					name="Generator"
-					options={{ title: 'Сгенерировать QR' }}
+					options={{ title: 'Сгенерировать QR', headerTitleAlign: 'center' }}
 					component={QRCodeGenerator}
 				/>
 				<Drawer.Screen
 					name="Statistics"
-					options={{ title: 'Статистика' }}
+					options={{ title: 'Статистика', headerTitleAlign: 'center' }}
 					component={StatisticsScreen}
 				/>
 				<Drawer.Screen
 					name="Products"
-					options={{ title: 'Список покупок' }}
+					options={{ title: 'Список покупок', headerTitleAlign: 'center' }}
 					component={ProductsScreen}
 				/>
-				<Drawer.Screen
-					name="Exit"
-					options={{ title: 'Выход' }}
-					component={ExitButton}
-				/>
+				<Drawer.Screen name="Exit" options={{ title: 'Выход' }} component={ExitButton} />
 			</Drawer.Navigator>
 		</NavigationContainer>
 	);

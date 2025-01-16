@@ -28,14 +28,14 @@ export const RefrigeratorsScreen = ({ navigation }) => {
     }, [])
   );
 
-  const handlePress = () => {
-    console.log("Нажали!");
+  const handlePress = ({fridge}) => {
+    navigation.navigate("OneFridge", {fridgeName: fridge.title, fridgeId: fridge.id});
   }
 
   const renderFridgeItem = ({ item }) => (
     <TouchableOpacity
       style={styles.fridgeItem}
-      onPress={handlePress}
+      onPress={() => handlePress({fridge: item})}
     >
       <Text style={styles.fridgeTitle}>{item.title}</Text>
     </TouchableOpacity>

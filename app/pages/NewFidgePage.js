@@ -32,6 +32,8 @@ export const NewFridgeScreen = ({ navigation }) => {
             Alert.alert('Ошибка', 'Не удалось добавить холодильник. Попробуйте еще раз.');
             console.error(error);
         }
+
+        navigation.navigate("Refrigerators");
     };
 
     return (

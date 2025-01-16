@@ -4,28 +4,32 @@ import { useFocusEffect } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Swipeable } from 'react-native-gesture-handler';
 
-import { CircleButton } from '../components/CircleButton';
-
 import { URL } from '../config';
 
 export const HomeScreen = ({ navigation }) => {
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortType, setSortType] = useState('expiry_date'); // По умолчанию сортировка по сроку годности
+  // По умолчанию сортировка по сроку годности
+  const [sortType, setSortType] = useState('expiry_date'); 
   const [openDropdown, setOpenDropdown] = useState(false);
 
   // Функция для получения данных с сервера
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`${URL}/refrigerator-products`);
+      const response = await fetch(`${URL}/products`);
       const data = await response.json();
-      if (data) {
-        setProducts(data);
+      
+      // Если данные — объект, в котором содержатся массивы, можно использовать Object.values
+      if (data && typeof data === 'object') {
+        // Извлекаем все массивы продуктов, если они находятся в значениях объекта
+        const products = Object.values(data).flat();
+        setProducts(products); // Обновляем состояние
       }
     } catch (error) {
       console.error('Error fetching products:', error);
     }
   };
+  
 
   // Используем useFocusEffect для загрузки данных при активации экрана
     useFocusEffect(
@@ -38,7 +42,7 @@ export const HomeScreen = ({ navigation }) => {
   const handleDelete = async (item) => {
     try {
       // Отправляем запрос на сервер для удаления
-      await fetch(`${URL}/refrigerator-products/${item.id}`, { method: 'DELETE' });
+      await fetch(`${URL}/deleteproduct/${item.id}`, { method: 'DELETE' });
 
       // Удаляем из локального списка
       setProducts((prevProducts) => prevProducts.filter((product) => product.id !== item.id));
@@ -152,8 +156,6 @@ export const HomeScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
         />
       </View>
-
-      <CircleButton navigation={navigation} />
     </View>
   );
 };

@@ -36,6 +36,7 @@ const QRCodeScanner = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(data),
+          
         });
         
       } catch (error) {
