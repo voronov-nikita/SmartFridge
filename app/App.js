@@ -14,7 +14,7 @@ import { RegScreen } from './pages/RegPage';
 import { AuthScreen } from './pages/AuthPage';
 import { HomeScreen } from './pages/HomePage';
 import { ExitButton } from './components/ExitButton';
-import { ProductsScreen } from './pages/ProductsPage';
+import { ShoppingScreen } from './pages/ShoppingPage';
 import { QRCodeGenerator } from './pages/QRGenerator';
 import { NewFridgeScreen } from './pages/NewFidgePage';
 import { OneFridgeScreen } from './pages/OneFridgePage';
@@ -143,7 +143,7 @@ export default function App() {
 				<Drawer.Screen
 					name="Products"
 					options={{ title: 'Список покупок', headerTitleAlign: 'center' }}
-					component={ProductsScreen}
+					component={ShoppingScreen}
 				/>
 				<Drawer.Screen name="Exit" options={{ title: 'Выход' }} component={ExitButton} />
 			</Drawer.Navigator>

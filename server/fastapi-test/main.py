@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Literal
-from sqlalchemy import create_engine, Column, Integer, String, JSON
+from sqlalchemy import create_engine, Column, Integer, String, JSON, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime, timedelta
@@ -25,11 +25,14 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
 
-# Модель данных для БД
-class QRData(Base):
-    __tablename__ = "qr_data"
+# Модель корзины (или списка покупок)
+class ShoppingCart(Base):
+    __tablename__ = "shopping"
     id = Column(Integer, primary_key=True, index=True)
-    content = Column(JSON, nullable=False)
+    name = Column(String, nullable=False)  # Название продукта
+    product_type = Column(String, nullable=False) # Тип продукции
+    fridge_id = Column(Integer, nullable=False)  # ID холодильника
+    mass = Column(String, nullable=False) # Масса продукта
 
 class Fridge(Base):
     __tablename__ = "fridges"
@@ -46,13 +49,37 @@ class UserResponse(BaseModel):
     login: str
     email: str
 
+class ShoppingCartCreate(BaseModel):
+    name: str
+    fridge_id: int
+    mass: str
+    product_type: str
+
+
 # Модель для авторизации
 class AuthRequest(BaseModel):
     login: str
     password: str
 
 # Модель продуктов
-class Product(BaseModel):
+class ProductDB(Base):
+    __tablename__ = "products"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    product_type = Column(String, nullable=False)
+    manufacture_date = Column(String, nullable=False)  # Дата в формате "YYYY-MM-DD"
+    expiry_date = Column(String, nullable=False)       # Дата в формате "YYYY-MM-DD"
+    mass = Column(Float, nullable=False)
+    unit = Column(String, nullable=False)              # Единицы измерения ("г", "кг", "мл", "л")
+    nutritional_value = Column(String, nullable=False)
+    fridge_id = Column(Integer, nullable=False)        # ID холодильника, где хранится продукт
+
+class ShopCreate(BaseModel):
+    name: str
+    fridge_id: int
+    mass: int
+
+class ProductCreate(BaseModel):
     name: str
     product_type: str
     manufacture_date: str
@@ -60,6 +87,18 @@ class Product(BaseModel):
     mass: float
     unit: Literal["г", "кг", "мл", "л"]
     nutritional_value: str
+    fridge_id: int
+
+class ProductResponse(BaseModel):
+    id: int
+    name: str
+    product_type: str
+    manufacture_date: str
+    expiry_date: str
+    mass: float
+    unit: Literal["г", "кг", "мл", "л"]
+    nutritional_value: str
+    fridge_id: int
 
 # Модель холодильника
 class FridgeModel(BaseModel):
@@ -122,30 +161,25 @@ def get_db():
 
 # Эндпоинт регистрации
 @app.post("/reg", response_model=UserResponse)
-async def register(user: UserCreate):
-    db = SessionLocal()
-    try:
-        # Проверяем, существует ли пользователь
-        existing_user = db.query(User).filter(
-            (User.email == user.email) | (User.login == user.login)
-        ).first()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Email или login уже зарегистрированы")
+async def register(user: UserCreate, db: Session = Depends(get_db)):
+    # Проверяем, существует ли пользователь
+    existing_user = db.query(User).filter(
+        (User.email == user.email) | (User.login == user.login)
+    ).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email или login уже зарегистрированы")
 
-        # Хэшируем пароль
-        hashed_password = hash_password(user.password)
-        new_user = User(login=user.login, email=user.email, password=hashed_password)
+    # Хэшируем пароль
+    hashed_password = hash_password(user.password)
+    new_user = User(login=user.login, email=user.email, password=hashed_password)
 
-        # Сохраняем пользователя в базе
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
+    # Сохраняем пользователя в базе
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
 
-        # Возвращаем только login и email
-        return {"login": new_user.login, "email": new_user.email}
-    finally:
-        db.close()
-
+    # Возвращаем только login и email
+    return {"login": new_user.login, "email": new_user.email}
 
 # Эндпоинт авторизации
 @app.post("/auth")
@@ -173,10 +207,154 @@ async def auth(request_data: AuthRequest, response: Response, db: Session = Depe
     # Если пользователь не найден или пароль неверный
     raise HTTPException(status_code=401, detail="Invalid login or password")
 
-# Пример эндпоинта для получения списка продуктов
-@app.get("/refrigerator-products", response_model=List[Product])
-async def get_products():
-    return []  # Здесь можно заменить на запрос к базе данных
+# Эндпоинт для получения всех товаров из корзины
+@app.get("/shopping", response_model=List[dict])
+async def get_all_cart_items(db: Session = Depends(get_db)):
+    cart_items = db.query(ShoppingCart).all()
+
+    if not cart_items:
+        return []
+
+    return [{"id": item.id, "name": item.name, "product_type": item.product_type, "fridge_id": item.fridge_id, "mass": item.mass} for item in cart_items]
+
+# Эндпоинт для добавления продукта в корзину
+@app.post("/shopping", response_model=dict)
+async def add_to_cart(item: ShoppingCartCreate, db: Session = Depends(get_db)):
+    try:
+        # Проверяем, существует ли холодильник с таким ID
+        fridge = db.query(Fridge).filter(Fridge.id == item.fridge_id).first()
+        if not fridge:
+            raise HTTPException(status_code=404, detail="Холодильник не найден")
+
+        # Создаем новую запись в корзине
+        new_item = ShoppingCart(
+            name=item.name, 
+            fridge_id=item.fridge_id, 
+            mass=item.mass, 
+            product_type=item.product_type
+        )
+
+        # Сохраняем продукт в базе
+        db.add(new_item)
+        db.commit()
+        db.refresh(new_item)
+
+        return {"id": new_item.id, "name": new_item.name, "fridge_id": new_item.fridge_id, "product_type": new_item.product_type}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Ошибка при добавлении в корзину: {str(e)}")
+    finally:
+        db.close()
+
+# Эндпоинт для удаления продукта из корзины
+@app.delete("/shopping/{item_id}", response_model=dict)
+async def remove_from_cart(item_id: int, db: Session = Depends(get_db)):
+    try:
+        cart_item = db.query(ShoppingCart).filter(ShoppingCart.id == item_id).first()
+
+        if not cart_item:
+            raise HTTPException(status_code=404, detail="Продукт не найден в корзине")
+
+        db.delete(cart_item)
+        db.commit()
+
+        return {"detail": "Продукт успешно удален из корзины"}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Ошибка при удалении продукта из корзины: {str(e)}")
+    finally:
+        db.close()
+
+
+@app.post("/products", response_model=ProductResponse)
+async def add_product(product: ProductCreate, db: Session = Depends(get_db)):
+    # Проверяем, существует ли холодильник
+    fridge = db.query(Fridge).filter(Fridge.id == product.fridge_id).first()
+    if not fridge:
+        raise HTTPException(status_code=404, detail="Холодильник не найден")
+
+    # Создаем новый продукт
+    new_product = ProductDB(
+        name=product.name,
+        product_type=product.product_type,
+        manufacture_date=product.manufacture_date,
+        expiry_date=product.expiry_date,
+        mass=product.mass,
+        unit=product.unit,
+        nutritional_value=product.nutritional_value,
+        fridge_id=product.fridge_id,
+    )
+
+    # Сохраняем продукт в базе
+    db.add(new_product)
+    db.commit()
+    db.refresh(new_product)
+
+    return new_product
+
+@app.get("/products")
+async def get_all_products(db: Session = Depends(get_db)):
+    # Получаем все продукты
+    products = db.query(ProductDB).all()
+
+    # Группируем продукты по холодильникам
+    grouped_products = {}
+    for product in products:
+        if product.fridge_id not in grouped_products:
+            grouped_products[product.fridge_id] = []
+        grouped_products[product.fridge_id].append({
+            "id": product.id,
+            "name": product.name,
+            "product_type": product.product_type,
+            "manufacture_date": product.manufacture_date,
+            "expiry_date": product.expiry_date,
+            "mass": product.mass,
+            "unit": product.unit,
+            "nutritional_value": product.nutritional_value,
+            "fridge_id": product.fridge_id
+        })
+
+    return grouped_products
+
+# Эндпоинт для удаления продукта
+@app.delete("/deleteproduct/{product_id}", response_model=dict)
+async def delete_product(product_id: int, db: Session = Depends(get_db)):
+    try:
+        # Ищем продукт в базе данных по id
+        product = db.query(ProductDB).filter(ProductDB.id == product_id).first()
+
+        # Если продукт не найден, выбрасываем исключение
+        if not product:
+            raise HTTPException(status_code=404, detail="Продукт не найден")
+
+        # Удаляем продукт из базы данных
+        db.delete(product)
+        db.commit()
+
+        # Возвращаем успешный ответ
+        return {"detail": "Продукт успешно удален"}
+
+    except Exception as e:
+        # Если произошла ошибка, откатываем транзакцию и выбрасываем исключение
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Ошибка при удалении продукта: {str(e)}")
+
+    finally:
+        db.close()
+
+
+@app.get("/fridge/{fridge_id}", response_model=List[ProductResponse])
+async def get_products_by_fridge(fridge_id: int, db: Session = Depends(get_db)):
+    # Получаем продукты для указанного холодильника
+    products = db.query(ProductDB).filter(ProductDB.fridge_id == fridge_id).all()
+
+    # пустые продукты, т.е их нет
+    if not products:
+        return []
+
+    return products
 
 # Пример эндпоинта для создания холодильника
 @app.post("/newfridge", response_model=FridgeModel)

@@ -38,7 +38,6 @@ export const OneFridgeScreen = ({ navigation }) => {
 	// Используем useFocusEffect для загрузки данных при активации экрана
 	useFocusEffect(
         useCallback(() => {
-            console.log(fridgeId);
 			fetchProducts(); // Загружаем продукты
 		}, []),
 	);
