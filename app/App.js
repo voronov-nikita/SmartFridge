@@ -107,7 +107,7 @@ export default function App() {
 	return (
 		<NavigationContainer>
 			<Drawer.Navigator
-				initialRouteName="AuthStack"
+				initialRouteName="Statistics"
 				screenOptions={{
 					drawerStyle: {
 						backgroundColor: '#f0f0f0',
