@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Literal
+from typing import List, Literal, Dict
 from sqlalchemy import create_engine, Column, Integer, String, JSON, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
@@ -55,6 +55,15 @@ class ShoppingCartCreate(BaseModel):
     mass: str
     product_type: str
 
+class StatisticDB(Base):
+    __tablename__ = "statistics"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    type = Column(String)
+    mass = Column(String)
+    quantity_day = Column(Integer, default=0)
+    quantity_week = Column(Integer, default=0)
+    quantity_month = Column(Integer, default=0)
 
 # Модель для авторизации
 class AuthRequest(BaseModel):
@@ -107,6 +116,18 @@ class FridgeModel(BaseModel):
 
 class NewFridgeModel(BaseModel):
     title: str
+    
+class Product(BaseModel):
+    name: str
+    quantity: int
+    type: str
+    mass: str
+
+class UpdateProduct(BaseModel):
+    name: str
+    type: str
+    mass: str
+    quantity: int
 
 # Создаем таблицы
 Base.metadata.create_all(bind=engine)
@@ -116,6 +137,7 @@ app = FastAPI()
 
 # Разрешенные источники
 origins = [
+    "http://192.168.0.10"
     "http://192.168.0.16",
     "http://localhost:8081",
     "http://localhost",
@@ -383,6 +405,48 @@ async def get_fridges():
         return [{"id": fridge.id, "title": fridge.title} for fridge in fridges]
     finally:
         db.close()
+
+
+@app.get("/top-products", response_model=Dict[str, List[Product]])
+async def get_top_products(db: Session = Depends(get_db)):
+    try:
+        top_products = {
+            "day": db.query(StatisticDB).order_by(StatisticDB.quantity_day.desc()).limit(5).all(),
+            "week": db.query(StatisticDB).order_by(StatisticDB.quantity_week.desc()).limit(5).all(),
+            "month": db.query(StatisticDB).order_by(StatisticDB.quantity_month.desc()).limit(5).all(),
+        }
+        return {
+            key: [
+                {"name": p.name, "quantity": getattr(p, f"quantity_{key}"), "type": p.type, "mass": p.mass}
+                for p in products
+            ]
+            for key, products in top_products.items()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving data: {str(e)}")
+
+@app.post("/update-product")
+async def update_product(update: UpdateProduct, db: Session = Depends(get_db)):
+    try:
+        product = db.query(StatisticDB).filter(StatisticDB.name == update.name).first()
+        if product:
+            product.quantity_day += update.quantity
+            product.quantity_week += update.quantity
+            product.quantity_month += update.quantity
+        else:
+            product = StatisticDB(
+                name=update.name,
+                type=update.type,
+                mass=update.mass,
+                quantity_day=update.quantity,
+                quantity_week=update.quantity,
+                quantity_month=update.quantity,
+            )
+            db.add(product)
+        db.commit()
+        return {"message": "Product updated successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating product: {str(e)}")
 
 # Автоматический запуск сервера
 if __name__ == "__main__":

@@ -16,6 +16,7 @@ import { HomeScreen } from './pages/HomePage';
 import { ExitButton } from './components/ExitButton';
 import { ShoppingScreen } from './pages/ShoppingPage';
 import { QRCodeGenerator } from './pages/QRGenerator';
+import { TGBotButton } from './components/TGBotButton';
 import { NewFridgeScreen } from './pages/NewFidgePage';
 import { OneFridgeScreen } from './pages/OneFridgePage';
 import { StatisticsScreen } from './pages/StatisticsPage';
@@ -107,7 +108,7 @@ export default function App() {
 	return (
 		<NavigationContainer>
 			<Drawer.Navigator
-				initialRouteName="Statistics"
+				initialRouteName="AuthStack"
 				screenOptions={{
 					drawerStyle: {
 						backgroundColor: '#f0f0f0',
@@ -145,6 +146,7 @@ export default function App() {
 					options={{ title: 'Список покупок', headerTitleAlign: 'center' }}
 					component={ShoppingScreen}
 				/>
+				<Drawer.Screen name="Notification" options={{ title: 'Уведомления' }} component={TGBotButton} />
 				<Drawer.Screen name="Exit" options={{ title: 'Выход' }} component={ExitButton} />
 			</Drawer.Navigator>
 		</NavigationContainer>

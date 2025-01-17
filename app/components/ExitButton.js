@@ -3,12 +3,12 @@
 // Является немного костылем, но что поделать, зато работает 😜
 // 
 
-import { useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 
 export const ExitButton = ({ navigation }) => {
     
     // сразу вызываем логику выхода из текущей сессии
-    useEffect(() => {
+    useFocusEffect(() => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('expiresAt');
         navigation.navigate('AuthStack');

@@ -13,7 +13,6 @@ export const ShoppingScreen = () => {
 		try {
 			const response = await fetch(`${URL}/shopping`);
 			const data = await response.json();
-      
 			// Если данные — объект, в котором содержатся массивы, можно использовать Object.values
 			if (data && typeof data === 'object') {
 				// Извлекаем все массивы продуктов, если они находятся в значениях объекта
@@ -37,6 +36,20 @@ export const ShoppingScreen = () => {
 		try {
 			// Отправляем запрос на сервер для удаления
 			await fetch(`${URL}/shopping/${item.id}`, { method: 'DELETE' });
+			const response = await fetch(`${URL}/shopping`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				// тело POST запроса
+				body: JSON.stringify({
+					name: item.name,
+					fridge_id: item.fridge_id,
+					mass: item.mass+item.unit,
+					product_type: item.product_type, // добавляем тип продукта
+				}),
+				credentials: 'include',
+			});
 
 			// Удаляем из локального списка
 			setProducts(prevProducts => prevProducts.filter(product => product.id !== item.id));
