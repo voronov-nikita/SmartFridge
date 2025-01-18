@@ -14,30 +14,36 @@ import {
 import { URL } from '../config';
 
 export const StatisticsScreen = () => {
+	const USERID = localStorage.getItem('UserId');
 	const [data, setData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [timeRange, setTimeRange] = useState('day');
 
+	const fetchData = async () => {
+		try {
+			const response = await fetch(`${URL}/top-products/${USERID}`, {
+				method: 'GET',
+				headers: {
+					Accept: 'application/json',
+				},
+				credentials: 'include',
+			});
+			const data = await response.json();
+			setLoading(true);
+			const sortedData = data[timeRange].sort((a, b) => b.quantity - a.quantity);
+			setData(sortedData);
+		} catch (error) {
+			console.error('Error fetching data:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-    const fetchData = async () => {
-        try {
-            const response = await fetch(`${URL}/top-products`);
-            const data = await response.json();
-            setLoading(true);
-            const sortedData = data[timeRange].sort((a, b) => b.quantity - a.quantity);
-            setData(sortedData);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useFocusEffect(
-        useCallback(() => {
-            fetchData();
-        }, []),
-    );
+	useFocusEffect(
+		useCallback(() => {
+			fetchData();
+		}, []),
+	);
 
 	useEffect(() => {
 		// Запрос данных в зависимости от выбранного диапазона времени

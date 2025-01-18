@@ -51,7 +51,6 @@ export const RegScreen = ({ navigation }) => {
 			try {
 				const response = await fetch(`${URL}/reg`, {
 					method: 'POST',
-					mode: 'no-cors',
 					headers: {
 						'Content-Type': 'application/json',
 					},

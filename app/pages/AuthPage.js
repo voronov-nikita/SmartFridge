@@ -84,14 +84,15 @@ export const AuthScreen = ({ navigation }) => {
 				// Проверка кода статуса ответа
 				if (response.ok) {
 					const data = await response.json();
-					const { access, refresh, expiresIn } = data;
+					const { access, refresh, expiresIn, userId } = data;
 
+
+					console.log(userId);
 					if (access) {
 						const expiresAt = Date.now() + expiresIn * 1000;
 						localStorage.setItem('authToken', access);
 						localStorage.setItem('expiresAt', expiresAt);
-						console.log('Access token сохранён:', access);
-						console.log('Refresh token получен и хранится в куках автоматически');
+						localStorage.setItem('UserId', userId)
 
 						setIsAuthenticated(true);
 						navigation.navigate('Home');

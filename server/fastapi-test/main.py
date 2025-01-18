@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException, Response, Depends
+from fastapi import FastAPI, HTTPException, Response, Depends, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Literal, Dict
-from sqlalchemy import create_engine, Column, Integer, String, JSON, Float
+from sqlalchemy import create_engine, Column, Integer, String, JSON, Float, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime, timedelta
@@ -30,14 +30,18 @@ class ShoppingCart(Base):
     __tablename__ = "shopping"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)  # Название продукта
-    product_type = Column(String, nullable=False) # Тип продукции
+    product_type = Column(String, nullable=False)  # Тип продукции
     fridge_id = Column(Integer, nullable=False)  # ID холодильника
-    mass = Column(String, nullable=False) # Масса продукта
+    mass = Column(String, nullable=False)  # Масса продукта
+    user_id = Column(Integer, nullable=False)  # ID пользователя
+
 
 class Fridge(Base):
     __tablename__ = "fridges"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, unique=True)
+    user_id = Column(Integer, nullable=False)  # Привязка к конкретному пользователю
+
 
 # Модель пользователя для регистрации
 class UserCreate(BaseModel):
@@ -48,6 +52,17 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     login: str
     email: str
+    
+class ProductStatResponse(BaseModel):
+    name: str
+    quantity: int
+    mass: str
+    type: str
+
+class TopProductsResponse(BaseModel):
+    day: List[ProductStatResponse]
+    week: List[ProductStatResponse]
+    month: List[ProductStatResponse]
 
 class ShoppingCartCreate(BaseModel):
     name: str
@@ -64,6 +79,7 @@ class StatisticDB(Base):
     quantity_day = Column(Integer, default=0)
     quantity_week = Column(Integer, default=0)
     quantity_month = Column(Integer, default=0)
+    user_id = Column(Integer, nullable=False)
 
 # Модель для авторизации
 class AuthRequest(BaseModel):
@@ -76,12 +92,13 @@ class ProductDB(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     product_type = Column(String, nullable=False)
-    manufacture_date = Column(String, nullable=False)  # Дата в формате "YYYY-MM-DD"
-    expiry_date = Column(String, nullable=False)       # Дата в формате "YYYY-MM-DD"
+    manufacture_date = Column(String, nullable=False)
+    expiry_date = Column(String, nullable=False)
     mass = Column(Float, nullable=False)
-    unit = Column(String, nullable=False)              # Единицы измерения ("г", "кг", "мл", "л")
+    unit = Column(String, nullable=False)
     nutritional_value = Column(String, nullable=False)
-    fridge_id = Column(Integer, nullable=False)        # ID холодильника, где хранится продукт
+    fridge_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, nullable=False)  # ID пользователя
 
 class ShopCreate(BaseModel):
     name: str
@@ -97,6 +114,7 @@ class ProductCreate(BaseModel):
     unit: Literal["г", "кг", "мл", "л"]
     nutritional_value: str
     fridge_id: int
+    user_id: int
 
 class ProductResponse(BaseModel):
     id: int
@@ -108,6 +126,7 @@ class ProductResponse(BaseModel):
     unit: Literal["г", "кг", "мл", "л"]
     nutritional_value: str
     fridge_id: int
+    user_id: int
 
 # Модель холодильника
 class FridgeModel(BaseModel):
@@ -116,6 +135,7 @@ class FridgeModel(BaseModel):
 
 class NewFridgeModel(BaseModel):
     title: str
+    user_id: int
     
 class Product(BaseModel):
     name: str
@@ -128,6 +148,26 @@ class UpdateProduct(BaseModel):
     type: str
     mass: str
     quantity: int
+    
+# Модель для данных продукта с user_id
+class ProductCreate(BaseModel):
+    name: str
+    product_type: str
+    manufacture_date: str
+    expiry_date: str
+    mass: float
+    unit: str
+    nutritional_value: str
+    fridge_id: int
+    user_id: int  # Добавляем поле user_id в модель
+
+# Модель для ответа
+class ProductResponse(BaseModel):
+    id: int
+    name: str
+    product_type: str
+    fridge_id: int
+    user_id: int
 
 # Создаем таблицы
 Base.metadata.create_all(bind=engine)
@@ -224,56 +264,69 @@ async def auth(request_data: AuthRequest, response: Response, db: Session = Depe
         )
 
         # Возврат access-токена и времени его жизни
-        return {"access": access_token, "expiresIn": 3600}
+        return {"access": access_token, "expiresIn": 3600, "userId": user.id}
 
     # Если пользователь не найден или пароль неверный
     raise HTTPException(status_code=401, detail="Invalid login or password")
 
 # Эндпоинт для получения всех товаров из корзины
-@app.get("/shopping", response_model=List[dict])
-async def get_all_cart_items(db: Session = Depends(get_db)):
-    cart_items = db.query(ShoppingCart).all()
+@app.get("/shopping/{user_id}", response_model=List[dict])
+async def get_all_cart_items(user_id: int, db: Session = Depends(get_db)):
+    cart_items = db.query(ShoppingCart).filter(ShoppingCart.user_id == user_id).all()
 
     if not cart_items:
         return []
 
-    return [{"id": item.id, "name": item.name, "product_type": item.product_type, "fridge_id": item.fridge_id, "mass": item.mass} for item in cart_items]
+    return [
+        {
+            "id": item.id,
+            "name": item.name,
+            "product_type": item.product_type,
+            "fridge_id": item.fridge_id,
+            "mass": item.mass,
+        }
+        for item in cart_items
+    ]
 
 # Эндпоинт для добавления продукта в корзину
-@app.post("/shopping", response_model=dict)
-async def add_to_cart(item: ShoppingCartCreate, db: Session = Depends(get_db)):
+@app.post("/shopping/{user_id}", response_model=dict)
+async def add_to_cart(user_id: int, item: ShoppingCartCreate, db: Session = Depends(get_db)):
     try:
-        # Проверяем, существует ли холодильник с таким ID
         fridge = db.query(Fridge).filter(Fridge.id == item.fridge_id).first()
         if not fridge:
             raise HTTPException(status_code=404, detail="Холодильник не найден")
 
-        # Создаем новую запись в корзине
         new_item = ShoppingCart(
-            name=item.name, 
-            fridge_id=item.fridge_id, 
-            mass=item.mass, 
-            product_type=item.product_type
+            name=item.name,
+            fridge_id=item.fridge_id,
+            mass=item.mass,
+            product_type=item.product_type,
+            user_id=user_id,
         )
 
-        # Сохраняем продукт в базе
         db.add(new_item)
         db.commit()
         db.refresh(new_item)
 
-        return {"id": new_item.id, "name": new_item.name, "fridge_id": new_item.fridge_id, "product_type": new_item.product_type}
+        return {
+            "id": new_item.id,
+            "name": new_item.name,
+            "fridge_id": new_item.fridge_id,
+            "product_type": new_item.product_type,
+        }
 
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Ошибка при добавлении в корзину: {str(e)}")
-    finally:
-        db.close()
+
 
 # Эндпоинт для удаления продукта из корзины
-@app.delete("/shopping/{item_id}", response_model=dict)
-async def remove_from_cart(item_id: int, db: Session = Depends(get_db)):
+@app.delete("/shopping/{user_id}/{item_id}", response_model=dict)
+async def remove_from_cart(user_id: int, item_id: int, db: Session = Depends(get_db)):
     try:
-        cart_item = db.query(ShoppingCart).filter(ShoppingCart.id == item_id).first()
+        cart_item = db.query(ShoppingCart).filter(
+            ShoppingCart.id == item_id, ShoppingCart.user_id == user_id
+        ).first()
 
         if not cart_item:
             raise HTTPException(status_code=404, detail="Продукт не найден в корзине")
@@ -286,16 +339,14 @@ async def remove_from_cart(item_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Ошибка при удалении продукта из корзины: {str(e)}")
-    finally:
-        db.close()
 
 
 @app.post("/products", response_model=ProductResponse)
 async def add_product(product: ProductCreate, db: Session = Depends(get_db)):
-    # Проверяем, существует ли холодильник
-    fridge = db.query(Fridge).filter(Fridge.id == product.fridge_id).first()
+    # Проверяем, существует ли холодильник, который принадлежит данному пользователю
+    fridge = db.query(Fridge).filter(Fridge.id == product.fridge_id, Fridge.user_id == product.user_id).first()
     if not fridge:
-        raise HTTPException(status_code=404, detail="Холодильник не найден")
+        raise HTTPException(status_code=404, detail="Холодильник не найден или не принадлежит пользователю")
 
     # Создаем новый продукт
     new_product = ProductDB(
@@ -307,6 +358,7 @@ async def add_product(product: ProductCreate, db: Session = Depends(get_db)):
         unit=product.unit,
         nutritional_value=product.nutritional_value,
         fridge_id=product.fridge_id,
+        user_id=product.user_id,  # user_id теперь передается из данных запроса
     )
 
     # Сохраняем продукт в базе
@@ -316,12 +368,10 @@ async def add_product(product: ProductCreate, db: Session = Depends(get_db)):
 
     return new_product
 
-@app.get("/products")
-async def get_all_products(db: Session = Depends(get_db)):
-    # Получаем все продукты
-    products = db.query(ProductDB).all()
+@app.get("/products/{user_id}")
+async def get_all_products(user_id: int, db: Session = Depends(get_db)):
+    products = db.query(ProductDB).filter(ProductDB.user_id == user_id).all()
 
-    # Группируем продукты по холодильникам
     grouped_products = {}
     for product in products:
         if product.fridge_id not in grouped_products:
@@ -339,6 +389,7 @@ async def get_all_products(db: Session = Depends(get_db)):
         })
 
     return grouped_products
+
 
 # Эндпоинт для удаления продукта
 @app.delete("/deleteproduct/{product_id}", response_model=dict)
@@ -366,74 +417,105 @@ async def delete_product(product_id: int, db: Session = Depends(get_db)):
     finally:
         db.close()
 
-
+# Все продукты определнного холодильника
 @app.get("/fridge/{fridge_id}", response_model=List[ProductResponse])
 async def get_products_by_fridge(fridge_id: int, db: Session = Depends(get_db)):
-    # Получаем продукты для указанного холодильника
-    products = db.query(ProductDB).filter(ProductDB.fridge_id == fridge_id).all()
+    products = db.query(ProductDB).filter(
+        ProductDB.fridge_id == fridge_id
+    ).all()
 
-    # пустые продукты, т.е их нет
     if not products:
         return []
 
     return products
 
+# удалить определнный холодильник
+@app.delete("/fridge/{fridge_id}", response_model=dict)
+async def delete_fridge(fridge_id: int, user_id: int, db: Session = Depends(get_db)):
+    try:
+        fridge = db.query(Fridge).filter(Fridge.id == fridge_id, Fridge.user_id == user_id).first()
+
+        if not fridge:
+            raise HTTPException(status_code=404, detail="Холодильник не найден или доступ запрещен.")
+
+        db.delete(fridge)
+        db.commit()
+        return {"detail": "Холодильник успешно удален"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Ошибка при удалении холодильника: {str(e)}")
+
+
 # Пример эндпоинта для создания холодильника
-@app.post("/newfridge", response_model=FridgeModel)
+@app.post("/newfridge")
 async def create_new_fridge(new_fridge: NewFridgeModel, db: Session = Depends(get_db)):
     try:
-        fridge = Fridge(title=new_fridge.title)
+        # Создаем холодильник с переданным user_id
+        fridge = Fridge(title=new_fridge.title, user_id=new_fridge.user_id)
         db.add(fridge)
         db.commit()
         db.refresh(fridge)
-        return {"id": fridge.id, "title": fridge.title}
+        return {"id": fridge.id, "title": fridge.title, "user_id": new_fridge.user_id}
     except Exception:
         db.rollback()
         raise HTTPException(status_code=400, detail="Холодильник с таким названием уже существует.")
 
-    finally:
-        db.close()
 
-@app.get("/fridge", response_model=List[FridgeModel])
-async def get_fridges():
-    """
-    Возвращает список всех холодильников.
-    """
-    db = SessionLocal()
+@app.get("/fridges/{user_id}", response_model=List[FridgeModel])
+async def get_fridges(user_id: int, db: Session = Depends(get_db)):
     try:
-        fridges = db.query(Fridge).all()
+        fridges = db.query(Fridge).filter(Fridge.user_id == user_id).all()
         return [{"id": fridge.id, "title": fridge.title} for fridge in fridges]
     finally:
         db.close()
 
-
-@app.get("/top-products", response_model=Dict[str, List[Product]])
-async def get_top_products(db: Session = Depends(get_db)):
+@app.get("/top-products/{user_id}", response_model=TopProductsResponse)
+async def get_top_products(user_id: int, db: Session = Depends(get_db)):
     try:
-        top_products = {
-            "day": db.query(StatisticDB).order_by(StatisticDB.quantity_day.desc()).limit(5).all(),
-            "week": db.query(StatisticDB).order_by(StatisticDB.quantity_week.desc()).limit(5).all(),
-            "month": db.query(StatisticDB).order_by(StatisticDB.quantity_month.desc()).limit(5).all(),
+        # Получаем все статистики пользователя
+        statistics = db.query(StatisticDB).filter(StatisticDB.user_id == user_id).all()
+
+        if not statistics:
+            raise HTTPException(status_code=404, detail="Статистика не найдена для этого пользователя")
+
+        # Формируем ответ с данными за день, неделю и месяц
+        result = {
+            "day": [],
+            "week": [],
+            "month": []
         }
-        return {
-            key: [
-                {"name": p.name, "quantity": getattr(p, f"quantity_{key}"), "type": p.type, "mass": p.mass}
-                for p in products
-            ]
-            for key, products in top_products.items()
-        }
+
+        for stat in statistics:
+            result["day"].append({"name": stat.name, "quantity": stat.quantity_day, "mass": stat.mass, "type": stat.type})
+            result["week"].append({"name": stat.name, "quantity": stat.quantity_week, "mass": stat.mass, "type": stat.type})
+            result["month"].append({"name": stat.name, "quantity": stat.quantity_month, "mass": stat.mass, "type": stat.type})
+
+        # Сортировка данных по количеству продуктов
+        for period in result:
+            result[period] = sorted(result[period], key=lambda x: x['quantity'], reverse=True)
+
+        # Возвращаем результат в формате Pydantic модели
+        return TopProductsResponse(**result)
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving data: {str(e)}")
+        print(f"Ошибка: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка получения топ-продуктов: {str(e)}")
+    finally:
+        db.close()
 
-@app.post("/update-product")
-async def update_product(update: UpdateProduct, db: Session = Depends(get_db)):
+@app.post("/update-product/{user_id}")
+async def update_product(user_id: int, update: UpdateProduct, db: Session = Depends(get_db)):
     try:
-        product = db.query(StatisticDB).filter(StatisticDB.name == update.name).first()
+        # Найти продукт по имени и user_id
+        product = db.query(StatisticDB).filter(StatisticDB.name == update.name, StatisticDB.user_id == user_id).first()
+        
         if product:
+            # Обновляем количество для текущего продукта
             product.quantity_day += update.quantity
             product.quantity_week += update.quantity
             product.quantity_month += update.quantity
         else:
+            # Если продукт не найден, создаем новый
             product = StatisticDB(
                 name=update.name,
                 type=update.type,
@@ -441,12 +523,16 @@ async def update_product(update: UpdateProduct, db: Session = Depends(get_db)):
                 quantity_day=update.quantity,
                 quantity_week=update.quantity,
                 quantity_month=update.quantity,
+                user_id=user_id
             )
             db.add(product)
+        
+        # Сохраняем изменения в базе данных
         db.commit()
         return {"message": "Product updated successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating product: {str(e)}")
+
 
 # Автоматический запуск сервера
 if __name__ == "__main__":

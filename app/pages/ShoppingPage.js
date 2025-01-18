@@ -6,12 +6,13 @@ import React, { useState, useCallback } from 'react';
 import { URL } from '../config';
 
 export const ShoppingScreen = () => {
+	const USERID = localStorage.getItem('UserId');
 	const [products, setProducts] = useState([]);
 
 	// Функция для получения данных с сервера
 	const fetchShop = async () => {
 		try {
-			const response = await fetch(`${URL}/shopping`);
+			const response = await fetch(`${URL}/shopping/${USERID}`);
 			const data = await response.json();
 			// Если данные — объект, в котором содержатся массивы, можно использовать Object.values
 			if (data && typeof data === 'object') {
@@ -31,30 +32,29 @@ export const ShoppingScreen = () => {
 		}, []),
 	);
 
-  // Удаление элемента из списка
+	// Удаление элемента из списка
 	const handleDelete = async item => {
 		try {
 			// Отправляем запрос на сервер для удаления
-			await fetch(`${URL}/shopping/${item.id}`, { method: 'DELETE' });
-			const response = await fetch(`${URL}/shopping`, {
+			await fetch(`${URL}/shopping/${USERID}/${item.id}`, { method: 'DELETE' });
+			const response = await fetch(`${URL}/update-product/${USERID}`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				// тело POST запроса
 				body: JSON.stringify({
+					user_id: USERID,
 					name: item.name,
-					fridge_id: item.fridge_id,
-					mass: item.mass+item.unit,
-					product_type: item.product_type, // добавляем тип продукта
+					type: item.product_type,
+					mass: item.mass,
+					quantity: 1,
 				}),
 				credentials: 'include',
 			});
 
 			// Удаляем из локального списка
 			setProducts(prevProducts => prevProducts.filter(product => product.id !== item.id));
-		} catch (error) {
-		}
+		} catch (error) {}
 	};
 
 	// Отображение кнопки удаления
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
 	},
 
 	emptyText: {
-		textAlign: 'center'
+		textAlign: 'center',
 	},
 
 	productItem: {

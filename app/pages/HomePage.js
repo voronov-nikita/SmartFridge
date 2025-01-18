@@ -7,6 +7,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { URL } from '../config';
 
 export const HomeScreen = ({ navigation }) => {
+	const USERID = localStorage.getItem('UserId');
 	const swipeableRef = useRef(null);
 	const [products, setProducts] = useState([]);
 	const [searchQuery, setSearchQuery] = useState('');
@@ -17,7 +18,7 @@ export const HomeScreen = ({ navigation }) => {
 	// Функция для получения данных с сервера
 	const fetchProducts = async () => {
 		try {
-			const response = await fetch(`${URL}/products`);
+			const response = await fetch(`${URL}/products/${USERID}`);
 			const data = await response.json();
 
 			// Если данные — объект, в котором содержатся массивы, можно использовать Object.values
@@ -57,7 +58,7 @@ export const HomeScreen = ({ navigation }) => {
 	// Добавление элемента в список покупок
 	const AddShop = async item => {
 		try {
-			const response = await fetch(`${URL}/shopping`, {
+			const response = await fetch(`${URL}/shopping/${USERID}`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

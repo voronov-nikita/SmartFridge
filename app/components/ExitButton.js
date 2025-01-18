@@ -11,6 +11,7 @@ export const ExitButton = ({ navigation }) => {
     useFocusEffect(() => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('expiresAt');
+        localStorage.removeItem('UserId');
         navigation.navigate('AuthStack');
     },[]
     );

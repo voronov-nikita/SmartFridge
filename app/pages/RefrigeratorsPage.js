@@ -7,12 +7,13 @@ import { SquareButton } from "../components/SquareButton";
 import { URL } from '../config';
 
 export const RefrigeratorsScreen = ({ navigation }) => {
+  const USERID = localStorage.getItem("UserId");
   const [fridges, setFridges] = useState([]);
 
   // Получение списка холодильников с сервера
   const fetchFridges = async () => {
     try {
-      const response = await fetch(`${URL}/fridge`);
+      const response = await fetch(`${URL}/fridges/${USERID}`);
       const data = await response.json();
       setFridges(data);
     } catch (error) {
