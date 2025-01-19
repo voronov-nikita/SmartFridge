@@ -310,8 +310,9 @@ npm start
 23. [Официальная документация по библиотеке генерации QR кодов в React Native - npmjs.com](https://www.npmjs.com/package/react-native-qrcode-svg)
 24. []()
 25. [ПОЧЕМУ НЕ ЛИСТАЕТСЯ FLATLIST?? - решение: stackoverflow.com](https://stackoverflow.com/questions/69356244/flatlist-and-scrollview-not-scrolling-with-react-native-web-when-using-react-nav)
+26. ["Стилизация текста в telegram. Разметка markdown и html" - habr.com](https://habr.com/ru/sandbox/170069/)
 
 <br><br>
 <br><br>
 
-###### 12.01.2025
+###### 19.01.2025

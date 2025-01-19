@@ -111,7 +111,7 @@ class ProductCreate(BaseModel):
     manufacture_date: str
     expiry_date: str
     mass: float
-    unit: Literal["г", "кг", "мл", "л"]
+    unit: str
     nutritional_value: str
     fridge_id: int
     user_id: int
@@ -123,7 +123,7 @@ class ProductResponse(BaseModel):
     manufacture_date: str
     expiry_date: str
     mass: float
-    unit: Literal["г", "кг", "мл", "л"]
+    unit: str
     nutritional_value: str
     fridge_id: int
     user_id: int
@@ -160,14 +160,6 @@ class ProductCreate(BaseModel):
     nutritional_value: str
     fridge_id: int
     user_id: int  # Добавляем поле user_id в модель
-
-# Модель для ответа
-class ProductResponse(BaseModel):
-    id: int
-    name: str
-    product_type: str
-    fridge_id: int
-    user_id: int
 
 # Создаем таблицы
 Base.metadata.create_all(bind=engine)
@@ -426,7 +418,7 @@ async def get_products_by_fridge(fridge_id: int, db: Session = Depends(get_db)):
 
     if not products:
         return []
-
+    
     return products
 
 # удалить определнный холодильник
